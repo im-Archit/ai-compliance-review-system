@@ -1,0 +1,8 @@
+{
+    "event_name": "DocumentUploaded",
+    "payload": {
+      "document_id": "string",
+      "storage_path": "string",
+      "uploaded_at": "ISO-8601 timestamp"
+    }
+  }
