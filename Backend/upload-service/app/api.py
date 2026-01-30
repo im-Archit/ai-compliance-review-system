@@ -1,4 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from app.storage.local import LocalStorageClient
+from app.events.local import LocalEventPublisher
+from app.db import SessionLocal, Document
 import uuid
 from datetime import datetime
 
@@ -42,5 +45,28 @@ async def upload_document(file: UploadFile = File(...)):
     return {
         "document_id": document_id,
         "status": "UPLOADED",
-        "message": "Document accepted for processing"
+        "storage_path": storage_path
     }
+
+db = SessionLocal()
+doc = Document(
+    id=document_id,
+    status="UPLOADED",
+    storage_path=storage_path
+)
+db.add(doc)
+db.commit()
+db.close()
+
+async def publish_event():
+    publisher = LocalEventPublisher()
+    await publisher.publish(
+        "DocumentUploaded",
+        {
+            "document_id": document_id,
+            "storage_path": storage_path
+        }
+    )
+
+import asyncio
+asyncio.run(publish_event())
