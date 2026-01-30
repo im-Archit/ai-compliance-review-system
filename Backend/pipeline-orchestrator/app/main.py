@@ -1,13 +1,15 @@
 # Service entry point
 from fastapi import FastAPI
 from app.consumer import start_consumer
+import threading
 
 app = FastAPI(title="Pipeline Orchestrator")
 
 @app.on_event("startup")
-async def startup_event():
-    await start_consumer()
+def startup_event():
+    thread = threading.Thread(target=start_consumer, daemon=True)
+    thread.start()
 
 @app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+def health():
+    return {"status": "orchestrator-running"}
