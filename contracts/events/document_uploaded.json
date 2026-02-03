@@ -2,7 +2,10 @@
     "event_name": "DocumentUploaded",
     "payload": {
       "document_id": "string",
-      "storage_path": "string",
-      "uploaded_at": "ISO-8601 timestamp"
+      "document_type": "STUDENT_ID",
+      "risk_level": "LOW",
+      "flags": [],
+      "confidence": 0.95,
+      "evaluated_at": "ISO_TIMESTAMP"
     }
   }

@@ -12,4 +12,4 @@ def startup_event():
 
 @app.get("/health")
 def health():
-    return {"status": "orchestrator-running"}
+    return {"status": "ok"}
