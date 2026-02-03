@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Databases
+*.db
+
+# Runtime data
+Backend/upload-service/data/
+Backend/compliance-store-service/compliance.db
+
+# OS
+.DS_Store

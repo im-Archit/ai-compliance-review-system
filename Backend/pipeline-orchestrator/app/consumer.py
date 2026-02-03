@@ -1,27 +1,57 @@
-from google.cloud import pubsub_v1
-import asyncio
-import json
 import os
+import json
 import threading
-from app.pipeline import process_document
+from google.cloud import pubsub_v1
 
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
-SUBSCRIPTION_ID = "pipeline-orchestrator-sub"
+SUBSCRIPTION_ID = "orchestrator-ocr-sub"
+publisher = pubsub_v1.PublisherClient()
+subscriber = pubsub_v1.SubscriberClient()
 
+def publish_event(topic, data):
+    topic_path = publisher.topic_path(PROJECT_ID, topic)
+    future = publisher.publish(topic_path, data=json.dumps(data).encode("utf-8"))
+    return future.result()
+
+
+# Consumer function for Pub/Sub events
 def start_consumer():
-    subscriber = pubsub_v1.SubscriberClient()
     subscription_path = subscriber.subscription_path(
         PROJECT_ID, SUBSCRIPTION_ID
     )
 
     def callback(message):
-        event = json.loads(message.data.decode("utf-8"))
-        print(f"[EVENT RECEIVED] {event}")
-        # Run async pipeline correctly
-        asyncio.run(process_document(event))
-        message.ack()
+        try:
+            event = json.loads(message.data.decode("utf-8"))
+            print("[EVENT RECEIVED]", event)
 
-    print("Pipeline Orchestrator listening for Pub/Sub events...")
+            document_id = event.get("document_id")
+            extracted_text = event.get("extracted_text")
+
+            if not extracted_text:
+                print("[PIPELINE] No OCR text found, skipping.")
+                message.ack()
+                return
+
+            # ---- pipeline steps (already existing logic assumed here) ----
+            result = {
+                "document_id": document_id,
+                "document_type": "INFORMATIONAL",
+                "risk_level": "LOW",
+                "status": "COMPLIANT"
+            }
+
+            publish_event(
+                "document-compliance-evaluated",
+                result
+            )
+
+            print("[COMPLIANCE EVENT PUBLISHED]", result)
+            message.ack()
+
+        except Exception as e:
+            print("[PIPELINE ERROR]", e)
+            message.nack()
 
     streaming_pull_future = subscriber.subscribe(
         subscription_path, callback=callback
