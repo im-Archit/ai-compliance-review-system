@@ -13,3 +13,17 @@ Backend/compliance-store-service/compliance.db
 
 # OS
 .DS_Store
+
+.env
+
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.next
+.DS_Store
+
+*.db
+*.sqlite

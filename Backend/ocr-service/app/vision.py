@@ -1,16 +1,36 @@
-from google.cloud import vision
+import pytesseract
+from PIL import Image
 
-client = vision.ImageAnnotatorClient()
 
+def extract_text_and_confidence(file_path: str) -> dict:
+    image = Image.open(file_path)
+
+    text = pytesseract.image_to_string(image).strip()
+
+    data = pytesseract.image_to_data(
+        image, output_type=pytesseract.Output.DICT
+    )
+
+    confidences = []
+    for conf in data.get("conf", []):
+        try:
+            conf_val = int(conf)
+            if conf_val > 0:
+                confidences.append(conf_val)
+        except ValueError:
+            continue
+
+    avg_confidence = (
+        sum(confidences) / len(confidences)
+        if confidences else 50
+    )
+
+    return {
+        "text": text,
+        "confidence": round(avg_confidence / 100, 2)
+    }
+
+
+# ✅ REQUIRED for consumer.py compatibility
 def extract_text(file_path: str) -> str:
-    with open(file_path, "rb") as f:
-        content = f.read()
-
-    image = vision.Image(content=content)
-    response = client.text_detection(image=image)
-
-    if response.error.message:
-        raise RuntimeError(response.error.message)
-
-    texts = response.text_annotations
-    return texts[0].description if texts else ""
+    return extract_text_and_confidence(file_path)["text"]
